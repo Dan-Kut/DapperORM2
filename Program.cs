@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 using Z.Dapper.Plus;
 
@@ -7,24 +8,6 @@ namespace DapperORM2
 {
 
     // У каждой компании есть связанная сущность - страна, где находится компания
-    public class Country
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-    }
-    public class Company
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-        public int CountryId { get; set; }         
-    }
-
-    public class User
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-        public int? CompanyId { get; set; }
-    }
 
 
 
@@ -35,7 +18,17 @@ namespace DapperORM2
 
         static void Main(string[] args)
         {
-            connectionString = "Data Source=dapper2.db";
+            var builder = new ConfigurationBuilder(); // Створення конфігуратора.
+            string path = Directory.GetCurrentDirectory(); // Отримує поточну директорію програми.
+            builder.SetBasePath(path); // Встановлює базовий шлях для конфігураційних файлів.
+            builder.AddJsonFile("appsettings.json"); // Додає файл конфігурації.
+            var config = builder.Build(); // Завантажує конфігурацію.
+            if (config == null)
+            {
+                throw new Exception("Configuration not found"); // Викидає помилку, якщо конфігурація не знайдена.
+            }
+            string connectionString = config.GetConnectionString("DefaultConnection"); // Отримує рядок підключення.
+
 
             DapperPlusManager.Entity<Company>().Table("Companies").Identity(x => x.Id);
 
@@ -45,19 +38,6 @@ namespace DapperORM2
             ShowAllCompanies();
             ShowAllUsersWCompanies();
 
-        }
-
-        static void ShowAllUsersWCompanies()
-        {
-            using (IDbConnection db = new SqliteConnection(connectionString))
-            {
-                var users = db.Query<User>("SELECT * FROM Users");
-                foreach (var user in users)
-                {
-                    var company = db.QueryFirstOrDefault<String>($"select Name\r\nfrom Companies\r\nwhere Id = {user.CompanyId}");
-                    Console.WriteLine($"{user.Id} {user.Name} {company}");
-                }
-            }
         }
 
         static void BulkInsertingCompanies()
@@ -81,31 +61,5 @@ namespace DapperORM2
             }
         }
 
-        static void ShowAllCompanies()
-        {
-
-            using (IDbConnection db = new SqliteConnection(connectionString))
-            {
-                var companies = db.Query<Company>("SELECT * FROM Companies");
-                foreach (var company in companies)
-                {
-                    var contrey = db.QueryFirstOrDefault<String>($"select Name\r\nfrom Countries\r\nwhere Id = {company.CountryId}");
-                    Console.WriteLine($"{company.Id} {company.Name} {contrey}");
-                }
-            }
-        }
-
-        static void BulkUpdateCompanies()
-        {
-            using (IDbConnection db = new SqliteConnection(connectionString))
-            {
-                var companies = db.Query<Company>("select * from Companies").ToList();
-                companies[2].Name = "XXerox";
-                companies[3].Name = "TToyota";
-
-
-                db.BulkUpdate(companies);
-            }
-        }
     }
 }

@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace DapperORM2.Models
 {
-    class Company
+    public class Company
     {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public int CountryId { get; set; }
     }
 }
