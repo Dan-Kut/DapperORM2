@@ -33,15 +33,30 @@ namespace DapperORM2.Repositories
                 }
             }
         }
-        // Transform method to List<int> id, List<string> name
         public void BulkUpdateCompaniNameById(List<int> id, List<string> name)
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
                 string query = "select * from Companies WHERE Id = @id";
-                var compani = db.QueryFirstOrDefault<Company>(query, new {id});
+                var companies = db.Query<Company>(query, id);
 
-                db.BulkUpdate(compani);
+                db.BulkUpdate(companies);
+            }
+        }
+        public void BulkInsertingCompanies(List<Company> companies)
+        {
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                DapperPlusManager.Entity<Company>().Table("Companies").Identity(x => x.Id);
+                db.BulkInsert(companies);
+            }
+        }
+        public void BulkDeleteCompanyById(List<int> ids)
+        {
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                var companies = db.Query<Company>($"select * from Companies");
+                db.BulkDelete(companies.Where(x => ids.Contains(x.Id) ));
             }
         }
     }
